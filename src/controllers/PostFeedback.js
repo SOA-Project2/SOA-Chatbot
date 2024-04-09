@@ -1,7 +1,6 @@
 const statusCodes = require("../constants/statusCodes");
 const fs = require('fs');
 const path = require('path');
-const language = require('@google-cloud/language');
 
 /**
  * Handle AI recommendation request
@@ -12,16 +11,15 @@ const language = require('@google-cloud/language');
 
 const postFeedback = async (req, res, next) => {
   try {
+    const language = require('@google-cloud/language');
     const client = new language.LanguageServiceClient();
     const feedback = req.body.feedback;
 
-    const sentimiento = await detectEmotion(feedback);
-    const respuesta = answerBasedOnEmotion(sentimiento);
-    console.log(respuesta);
+    const emotion = await detectEmotion(feedback, client);
+    const message = answerBasedOnEmotion(emotion);
+    saveFeedback({ feedback, emotion: emotion.score, message });
 
-    saveFeedback({ feedback, sentimiento: sentimiento.score, respuesta });
-
-    res.status(statusCodes.OK).send({ respuesta });
+    res.status(statusCodes.OK).send({ message });
   } catch (error) {
     return internalError(next);
   }
@@ -36,11 +34,31 @@ function internalError(next) {
   
 };
 
+async function detectEmotion(feedback, client) {
+  const document = {
+    content: feedback,
+    type: 'PLAIN_TEXT',
+    key: process.env.GOOGLE_APPLICATION_CREDENTIALS
+  };
+
+  
+  const [result] = await client.analyzeSentiment({document: document});
+  const emotion = result.documentSentiment;
+  console.log(`Texto: ${feedback}`);
+  console.log(`Sentimiento: ${emotion.score}`);
+  return emotion;
+}
+
 function saveFeedback(feedback) {
   const feedbackPath = path.join(__dirname, '../models/feedback.json');
-  fs.readFile(feedbackPath, (err, data) => {
+  fs.readFile(feedbackPath, 'utf8', (err, data) => {
     if (err) throw err;
-    let json = JSON.parse(data);
+    let json;
+    try {
+      json = JSON.parse(data);
+    } catch (e) {
+      json = [];
+    }
     json.push(feedback);
     fs.writeFile(feedbackPath, JSON.stringify(json, null, 2), (err) => {
       if (err) throw err;
@@ -49,21 +67,6 @@ function saveFeedback(feedback) {
   });
 }
 
-
-
-async function detectEmotion(feedback) {
-  const document = {
-    content: feedback,
-    type: 'PLAIN_TEXT',
-  };
-
-  
-  const [result] = await client.analyzeSentiment({document: document});
-  const sentimiento = result.documentSentiment;
-  console.log(`Texto: ${texto}`);
-  console.log(`Sentimiento: ${sentimiento.score}`);
-  return sentimiento;
-}
 
 function answerBasedOnEmotion(emotion) {
   if (emotion.score > 0) {
