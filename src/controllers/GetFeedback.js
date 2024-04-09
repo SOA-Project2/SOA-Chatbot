@@ -10,15 +10,31 @@ const path = require('path');
  */
 
 const getFeedback = async (req, res, next) => {
-  const feedbackPath = path.join(__dirname, '../models/feedback.json');
   try {
-    const data = await fs.promises.readFile(feedbackPath, 'utf8');
+    const { Storage } = require("@google-cloud/storage");
+    const path = require("path");
+    
+    const keyFilePath = path.join(__dirname, "../soa-g6-p2-b88ea1966460.json");
+    
+    const storage = new Storage({
+      projectId: "soa-g6-p2",
+      keyFilename: keyFilePath,
+    });
+
+    const bucketName = 'soag6_feedback_bucket';
+    const filename = 'feedback.json';
+
+    const file = storage.bucket(bucketName).file(filename);
+    
+    const [data] = await file.download();
     let feedback;
-    if (data) {
-      feedback = JSON.parse(data);
-    } else {
+
+    try {
+      feedback = JSON.parse(data.toString());
+    } catch (e) {
       feedback = [];
     }
+
     res.status(statusCodes.OK).json(feedback);
   } catch (error) {
     return internalError(next);
