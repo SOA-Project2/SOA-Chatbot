@@ -1,0 +1,41 @@
+{
+  "name": "chatbot-api",
+  "jest": {
+    "verbose": true
+  },
+  "version": "1.0.0",
+  "description": "Feedback system for customers",
+  "main": "src/server.js",
+  "scripts": {
+    "test": "jest",
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SOA-Project2/SOA-Chatbot.git"
+  },
+  "keywords": [
+    "REST",
+    "nodeJS",
+    "express"
+  ],
+  "author": "SOA-Project2",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/SOA-Project2/SOA-Chatbot/issues"
+  },
+  "homepage": "https://github.com/SOA-Project2/SOA-Chatbot#readme",
+  "dependencies": {
+    "@google-cloud/language": "^6.3.0",
+    "@google-cloud/storage": "^7.9.0",
+    "express": "^4.18.2",
+    "morgan": "^1.10.0",
+    "openai": "^4.28.0"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "nodemon": "^3.1.0",
+    "supertest": "^6.3.4"
+  }
+}
